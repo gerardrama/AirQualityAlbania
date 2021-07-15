@@ -1,0 +1,223 @@
+---
+title: "Ndotja Atmosferike ne Shqiperi"
+output:
+  pdf_document: default
+  html_document:
+    code_folding: hide
+---
+Instalimi i paketave
+```{r}
+#install.packages("")
+```
+
+Vendosja e librarive ne program
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(gganimate)
+library(gapminder)
+library(gifski)
+library(png)
+library(directlabels)
+library(tidyr)
+library(pracma)
+library(zoo)
+library(stats)
+```
+
+Popullimi i vlerave boshe me vlera te perafruara 
+```{r}
+# tiranaData <- read_csv("Tirana.csv")
+# tiranaData[-(1:2)] <- zoo::na.approx(tiranaData[-(1:2)])
+# print(tiranaData)
+# write.csv(tiranaData,"Shqiperi.csv", row.names = FALSE)
+```
+
+Marrja e te dhenave ne program
+```{r}
+allData <- read_csv("Dataset/CompleteDataset.csv")
+avgAlbaniaData <- read_csv("Dataset/Shqiperi.csv")
+EUData <- read_csv("Dataset/EU_Recommendations.csv")
+OBSHData <- read_csv("Dataset/WHO_Recommendations.csv")
+deathsAlbania <- read_csv("Dataset/Vdekje_Shqiperi.csv")
+```
+
+Marredhenia e ndotesve me njeri tjetrin
+```{r}
+plot(allData%>%select(-years, - city))
+```
+Grafiket qe tregojne nivelet e ndotjes ne krahasim me direktivat e OBSH
+```{r}
+listName <- colnames(allData)
+
+for(i in 3:length(listName)) {
+  cityPollution <- ggplot(data = OBSHData) +
+                    geom_line(mapping = aes_string(x = "years", y = listName[i]), colour = "red") +
+                    geom_dl(aes_string(x = "years", y = listName[i], label = "'OBSH'"), method = list(dl.trans(x = x - 1.5, y = y + 0.2), "last.qp")) +
+                    geom_line(data = allData, mapping = aes_string(x = "years", y = listName[i], colour = "city")) +
+                    geom_point(data = allData, mapping = aes_string(x = "years", y = listName[i]))
+  if(listName[i] == "Benzen"){
+    cityPollution <- cityPollution + scale_y_discrete(limits=c(0, 1, 2, 3, 4 ,5, 6))
+  }
+  print(cityPollution)
+}
+```
+
+Grafiket qe tregojne nivelet e ndotjes ne krahasim me direktivat e BE
+```{r}
+listName <- colnames(allData)
+
+for(i in 3:length(listName)) {
+  cityPollution <- ggplot(data = EUData) +
+                    geom_line(mapping = aes_string(x = "years", y = listName[i]), colour = "red") +
+                    geom_dl(aes_string(x = "years", y = listName[i], label = "'BE'"), method = list(dl.trans(x = x - 1, y = y + 0.2), "last.qp")) +
+                    geom_line(data = allData, mapping = aes_string(x = "years", y = listName[i], colour = "city")) +
+                    geom_point(data = allData, mapping = aes_string(x = "years", y = listName[i])) +
+                    xlab("Viti")
+  print(cityPollution)
+}
+```
+Grafiket tregojne ecurine (trend-in) e ndotjes pergjate viteve
+```{r}
+listName <- colnames(allData)
+
+for(i in 3:length(listName)) {
+  cityPollution <- ggplot(data = EUData) +
+                    geom_line(mapping = aes_string(x = "years", y = listName[i]), colour = "blue4") +
+                    geom_line(data = allData, mapping = aes_string(x = "years", y = listName[i], colour = "city")) +
+                    geom_line(data = OBSHData, mapping = aes_string(x = "years", y = listName[i], color = "'aquamarine'")) +
+                    geom_dl(aes_string(x = "years", y = listName[i], label = "'BE'"), method = list(dl.trans(x = x - 0.5, y = y + 0.2), "last.qp")) +
+                    geom_dl(data = OBSHData, aes_string(x = "years", y = listName[i], label = "'OBSH'"), method = list(dl.trans(x = x - 1, y = y + 0.2), "last.qp")) +
+                    geom_point(data = allData, mapping = aes_string(x = "years", y = listName[i])) +
+                    geom_smooth(method = "lm", data = allData, mapping = aes_string(x = "years", y = listName[i])) 
+  if(listName[i] == "Benzen"){
+    cityPollution <- cityPollution + scale_y_discrete(limits=c(0, 1, 2, 3, 4 ,5, 6))
+  }
+  print(cityPollution)
+}
+```
+Krahasimi i qyteteve me njeri tjetrin
+```{r}
+listName <- colnames(allData)
+
+for(i in 3:length(listName)){
+  separatePlot <- ggplot(data = allData) + 
+                    geom_point(mapping = aes_string(x = "years", y = listName[i], color = "city")) + 
+                    geom_line(aes_string(x = "years", y = listName[i])) +
+                    facet_wrap(~ city, nrow = 2)
+  print(separatePlot)
+}
+```
+Krahasimi i niveleve te ndotjes se qyteteve ne krahasim me mesataren shqiptare.
+```{r}
+listName <- colnames(allData)
+
+for(i in 3:length(listName)) {
+  plotAvg <- ggplot(data = allData) + 
+              geom_line(mapping = aes_string(x = "years", y = listName[i], color = "city")) + 
+              geom_line(data = avgAlbaniaData, aes_string(x = "years", y = listName[i]), colour = "yellow") +
+              geom_dl(aes_string(x = "years", y = listName[i], label = "'Mesatare Shqiptare'"), method = list(dl.trans(x = x - 1.5), "last.qp")) +
+              geom_line(data = EUData, aes_string(x = "years", y = listName[i]), colour = "blue4") + 
+              geom_dl(data = EUData, aes_string(x = "years", y = listName[i], label = "'BE'"), method = list("last.qp")) +
+              labs(title = listName[i]) +
+              xlab("Viti")
+    
+  if(listName[i] != "Benzen"){
+    plotAvg <- plotAvg + geom_line(data = OBSHData, mapping = aes_string(x = "years", y = listName[i]), colour = "red") +
+                         geom_dl(data = OBSHData, aes_string(x = "years", y = listName[i], label = "'OBSH'"), method = list("last.qp"))
+  }
+  print(plotAvg)
+}
+
+```
+Modeli i regresit linear per cdo ndotes i vizualizuar me poshte
+(CO e vendosur dhe nje here vete per arsye qartesie)
+```{r}
+ggplot(data = avgAlbaniaData) +
+  geom_smooth(method = "lm", mapping = aes(x = years, y = PM10, colour = "PM10")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = PM2.5, colour = "PM2.5")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = CO, colour = "CO")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = SO2, colour = "SO2")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = NO2, colour = "NO2")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = O3, colour = "O3")) + 
+  geom_smooth(method = "lm", mapping = aes(x = years, y = Benzen, colour = "Benzen")) +
+  geom_line(data = OBSHData, mapping = aes(x = years, y = PM2.5, colour = "PM2.5")) +
+  labs(title = "Modeli i regresit per ndotesit") +
+  xlab("Viti")
+  ylab("Niveli")
+```
+```{r}
+ggplot(data = avgAlbaniaData) +
+  geom_smooth(method = "lm", mapping = aes(x = years, y = CO, colour = "CO")) + 
+  labs(title = "Modeli i regresit per ndotesin CO") +
+  ylab("Niveli") +
+  xlab("Vitet")
+```
+Animacion i komentuar per te mos shfaqur shume faqe ne PDF
+```{r}
+# p.04 <- ggplot(allData,
+#              aes(years,PM2.5, color = city) 
+# ) +
+#   geom_line(lwd=1) +
+#   #geom_point() +
+#   xlab("Years")+
+#   ylab("SO2 Levels") +
+#   scale_color_brewer(palette="Paired") +
+#   ease_aes('linear') +
+#   ggtitle("Ecuria vjetore e niveleve te PM2.5") +
+#   theme(legend.position="top") +
+#   geom_line(data = OBSHData, col = "black")
+# 
+#  
+# #p.05 <- p.04 + transition_reveal(years) 
+# p.04
+```
+
+Grafiku i funksioni te probabilitetit densitar
+```{r}
+listName = colnames(allData)
+for(i in 3:length(listName)) {
+  densityPlot <- ggplot(allData, aes_string(x=listName[i], color = "city")) + 
+                  geom_density(alpha=0.05, fill="#FF6666") 
+    print(densityPlot)
+}
+```
+
+Lidhja mes vdekshmerise nga ndotesite dhe nivelet e tyre gjate viteve
+```{r}
+albData <- avgAlbaniaData %>% filter(years != 2012, years != 2017, years != 2019)
+albData <- albData %>% select(years, PM2.5, NO2, O3)
+
+ggplot(data = deathsAlbania) +
+  geom_point(mapping = aes(x = albData$PM2.5, y = PM2.5)) +
+  geom_smooth(method = "lm", mapping = aes(x = albData$PM2.5, y = PM2.5)) +
+  xlab("Niveli PM2.5") +
+  ylab("Vdekjet nga PM2.5")
+  
+ggplot(data = deathsAlbania) +
+  geom_point(mapping = aes(x = albData$NO2, y = NO2)) +
+  geom_smooth(method = "lm", mapping = aes(x = albData$NO2, y = NO2)) +
+  xlab("Niveli NO2") +
+  ylab("Vdekjet nga NO2")
+
+ggplot(data = deathsAlbania) +
+  geom_point(mapping = aes(x = albData$O3, y = O3)) +
+  geom_smooth(method = "lm", mapping = aes(x = albData$O3, y = O3)) +
+  xlab("Niveli O3") +
+  ylab("Vdekjet nga O3")
+
+
+```
+
+Referenca
+1. http://www.instat.gov.al/al/temat/mjedisi-dhe-energjia/mjedisi/#tab2
+2. https://ec.europa.eu/environment/air/quality/standards.htm
+3. https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health
+4. https://www.eea.europa.eu/publications/air-quality-in-europe-2020-report
+5. https://www.eea.europa.eu/publications/air-quality-in-europe-2019
+6. https://www.eea.europa.eu/publications/air-quality-in-europe-2018
+7. https://www.eea.europa.eu/publications/air-quality-in-europe-2017
+8. https://www.eea.europa.eu/publications/air-quality-in-europe-2016
+9. https://www.who.int/ipcs/features/benzene.pdf
