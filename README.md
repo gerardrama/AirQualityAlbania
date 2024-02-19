@@ -28,8 +28,8 @@ Provides an interactive interface for exploring the air quality data.
 ## Running the Application
 1. Clone the repository to your local machine.
 2. Open R Studio and set your working directory to the cloned repository's folder.
-3. For RMarkdown run the */REALPROJECT.Rmd*/.
-4. For Shiny App install all packages in the .r files and then run /*ui.r/* 
+3. For RMarkdown run the *REALPROJECT.Rmd*.
+4. For Shiny App install all packages in the .r files and then run *ui.r* 
 
 ## Contributing
 This was made in collaboration with: [FrediGj](https://github.com/fredigj)
